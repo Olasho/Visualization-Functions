@@ -67,7 +67,7 @@ tabyl_2_way_table <- function(df, variable_1, variable_2) {
 
 # Creating a function to convert a three-way table created by the tabyl function to a kable
 
-convert_to_kable <- function(table_list) {
+convert_to_kable_list <- function(table_list) {
   require(tidyverse)
   require(kableExtra)
   
@@ -97,7 +97,7 @@ convert_to_kable <- function(table_list) {
         position = "center",
         font_size = 20
       ) %>%
-      pack_rows(paste(names(table_list[i]), euro_standard), 1, 7)
+      pack_rows(paste(names(table_list[i])), 1, nrow(table_list[[1]]))
     
     # Append the kable to the list
     table_kables[[i]] <- kbl_tbl

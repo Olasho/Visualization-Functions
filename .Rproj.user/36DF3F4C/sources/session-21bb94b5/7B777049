@@ -3,7 +3,7 @@
     "path": "~/Desktop/R language2/My projects/Visualization Functions/Scripts/Table functions.R",
     "project_path": "Scripts/Table functions.R",
     "type": "r_source",
-    "hash": "0",
+    "hash": "943918575",
     "contents": "",
     "dirty": false,
     "created": 1714981101220.0,
@@ -12,15 +12,15 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "50,65",
-        "scrollLine": "0"
+        "cursorPosition": "69,21",
+        "scrollLine": "64"
     },
     "folds": "",
-    "lastKnownWriteTime": 1715032390,
+    "lastKnownWriteTime": 1716148732,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1715032390235,
+    "last_content_update": 1716148732468,
     "read_only": false,
     "read_only_alternatives": []
 }
