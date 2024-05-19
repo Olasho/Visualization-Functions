@@ -63,3 +63,45 @@ tabyl_2_way_table <- function(df, variable_1, variable_2) {
     adorn_title() %>%
     datatable(class = 'cell-border stripe', filter = "top")
 }
+
+
+# Creating a function to convert a three-way table created by the tabyl function to a kable
+
+convert_to_kable <- function(table_list) {
+  require(tidyverse)
+  require(kableExtra)
+  
+  # Initialize an empty list to store the kable outputs
+  table_kables <- list()
+  
+  # Iterate over each table in the list
+  
+  for (i in seq_along(table_list)) {
+    
+    # Extract EuroStandard levels from the current table
+    euro_standard <- attr(table_list[[i]], "dimnames")[["EuroStandard"]]
+    
+    # Convert the tabyl object to a data frame
+    tbl_df <- as.data.frame(table_list[[i]])
+    
+    # Create the kable
+    kbl_tbl <- tbl_df %>%
+      kbl(caption = paste("Summary table of vehicles by taxi status for EuroStandard", euro_standard),
+          align = "ccccc",
+          format.args = list(big.mark = ",")
+      ) %>%
+      kable_minimal(full_width = F, html_font = "Cambria") %>%
+      kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        full_width = T,
+        position = "center",
+        font_size = 20
+      ) %>%
+      pack_rows(paste(names(table_list[i]), euro_standard), 1, 7)
+    
+    # Append the kable to the list
+    table_kables[[i]] <- kbl_tbl
+  }
+  
+  return(table_kables)
+}
