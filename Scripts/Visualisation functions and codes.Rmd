@@ -1,0 +1,279 @@
+---
+title: "Visualisation functions and codes"
+author: "Olasehinde Shobande"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Functions 
+
+## creating a function for a one way bar plot
+
+```{r}
+barchart <- function(df, x, title) {
+  require(ggplot2)
+  require(plotly)
+  
+  # Calculate frequency count of categories
+  freq_count <- table(df[[x]])
+  
+  # Convert frequency count to a data frame
+  df_freq <- as.data.frame(freq_count)
+  colnames(df_freq) <- c("Categories", "Frequency")
+  
+  # Create ggplot object
+  p <- ggplot(df_freq, aes_string(x = "Categories", y = "Frequency")) +
+    geom_bar(fill = "red", alpha = 0.7, stat = "identity") +
+    geom_text(aes(label = Frequency), vjust = -0.5) + 
+    labs(title = title,
+         x = "Categories",
+         y = "Frequency") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  ggplotly(p)
+}
+```
+
+## creating a fucntion  for a two way barchart 
+
+```{r}
+barchart_2_way <- function(df, x, y, title) {
+  require(ggplot2)
+  
+  # Calculate frequency count of categories
+  
+  freq_count <- table(df[[x]], df[[y]])
+  
+  # Convert frequency count to a data frame
+  
+  df_freq <- as.data.frame(freq_count)
+  colnames(df_freq) <- c(x, y, "Frequency")
+  
+  # Create ggplot object
+  p <- ggplot(df_freq, aes_string(x = x, y = "Frequency", fill = y)) +
+    geom_bar(stat = "identity", position = "stack", alpha = 0.7) +
+    labs(title = title,
+         x = x,
+         y = "Frequency") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  
+  ggplotly(p)
+}
+```
+
+## Creating a function for summarizing a one-way or two-way or a three-way summary table using tabyl
+
+```{r}
+tabyl_summary_table <- function(df, variable_1, variable_2 = NULL, variable_3 = NULL) {
+  require(janitor)
+  require(tidyverse)
+  
+  if(!is.null(variable_1) && is.null(variable_2) && is.null(variable_3)) {
+    df %>%
+      tabyl({{variable_1}}) %>% 
+      adorn_totals("row") %>%
+      adorn_pct_formatting()
+  } else if (!is.null(variable_1) && !is.null(variable_2) && is.null(variable_3)) {
+    df %>%
+      tabyl({{variable_1}}, {{variable_2}}) %>% 
+      adorn_totals("col") %>%
+      adorn_percentages("row") %>%
+      adorn_pct_formatting(digits = 2) %>%
+      adorn_ns() %>%
+      adorn_title()
+  } else if(!is.null(variable_1) && !is.null(variable_2) && !is.null(variable_3)) {
+    df %>%
+      tabyl({{variable_1}}, {{variable_2}}, {{variable_3}}) %>% 
+      adorn_totals("col") %>%
+      adorn_percentages("row") %>%
+      adorn_pct_formatting(digits = 2) %>%
+      adorn_ns() %>%
+      adorn_title()
+  } else {
+    # Handle other cases or provide a default behavior
+    print("Invalid combination of arguments provided.")
+  }
+}
+```
+
+## creating a kable function to improve the summary table for the categorical variable
+
+```{r}
+summary_kable <- function(df, header) {
+  require(kableExtra)
+  require(knitr)
+  df %>%
+    kbl(caption = header, align = "llr", format.args = list(big.mark = ",")) %>%
+    kable_classic_2(full_width = F, html_font = "Cambria") %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = T, position = "center", font_size = 20)
+}
+
+
+
+
+
+# Creating the function for a two-way table that is aesthetically improved by datatable
+
+tabyl_2_way_table <- function(df, variable_1, variable_2) {
+  require(janitor)
+  
+  # Two-way table for two variables
+  df %>%
+    tabyl({{ variable_1 }}, {{ variable_2 }}) %>% 
+    adorn_totals("col") %>%
+    adorn_percentages("row") %>%
+    adorn_pct_formatting(digits = 2) %>%
+    adorn_ns() %>%
+    adorn_title() %>%
+    datatable(class = 'cell-border stripe', filter = "top")
+}
+
+
+# Creating a function to convert a three-way table created by the tabyl function to a kable
+
+convert_to_kable_list <- function(table_list) {
+  require(tidyverse)
+  require(kableExtra)
+  
+  # Initialize an empty list to store the kable outputs
+  table_kables <- list()
+  
+  # Iterate over each table in the list
+  
+  for (i in seq_along(table_list)) {
+    
+    # Extract EuroStandard levels from the current table
+    euro_standard <- attr(table_list[[i]], "dimnames")[["EuroStandard"]]
+    
+    # Convert the tabyl object to a data frame
+    tbl_df <- as.data.frame(table_list[[i]])
+    
+    # Create the kable
+    kbl_tbl <- tbl_df %>%
+      kbl(caption = paste("Summary table of vehicles by taxi status for EuroStandard", euro_standard),
+          align = "ccccc",
+          format.args = list(big.mark = ",")
+      ) %>%
+      kable_minimal(full_width = F, html_font = "Cambria") %>%
+      kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        full_width = T,
+        position = "center",
+        font_size = 20
+      ) %>%
+      pack_rows(paste(names(table_list[i])), 1, nrow(table_list[[1]]))
+    
+    # Append the kable to the list
+    table_kables[[i]] <- kbl_tbl
+  }
+  
+  return(table_kables)
+}
+```
+
+# Visualization codes
+
+## Using transition_reveal from gganimate with ggplot
+
+```{r}
+
+library(gganimate)
+
+# We are going to be using the long form of the dataset (allPAFiltered_2)
+
+ggplot(allPAFiltered_2, aes(x = justDate, y = `PM25_CFATM_Average`, color = school, group = school)) +
+  geom_line(size = 0.2) +
+  geom_point(size = 2) +
+  geom_text(aes(label = school), vjust = -0.5, hjust = 0, size = 4) +
+  facet_wrap(~`location relative to CAZ`, ncol = 1) +
+  theme_minimal() +
+  theme(
+    axis.title = element_text(size = 10, face = "bold"),
+    axis.text = element_text(size = 10, face = "bold"),
+    axis.text.x = element_text(vjust = 1, angle = 45),
+    plot.title = element_text(size = 10)
+  ) +
+  labs(
+    title = "Particulate Matter Concentration of Schools relative to the CAZ",
+    x = "Date",
+    y = "PM2.5 Average"
+  ) +
+  scale_colour_brewer(palette = "Set1") +
+  scale_x_date(breaks = scales::breaks_width("1 month")) +
+  transition_reveal(justDate) 
+  
+?scale_x_date
+?scales::breaks_width()
+```
+
+## Plotting a dygraph of multiple variables spread out in a wider data format
+
+```{r}
+dygraph(allPAFiltered_3,
+        main = "Time series of PM2.5 concentrations for each school",
+        ylab = "Mean PM<sub>2.5</sub> (\u03BCg/m<sup>3</sup>)") %>%
+  dyOptions(colors = RColorBrewer::brewer.pal(11, "Dark2"), stepPlot = TRUE, drawPoints = TRUE, pointSize = 2, pointShape = "triangle") %>%
+  dyLegend(show = "onmouseover") %>% 
+  dyRangeSelector(height = 50)
+```
+
+## Plotting a summary table with gtsummary 
+
+```{r}
+allPAFiltered_2 %>% 
+  mutate(school = str_replace_all(school, "_", " "),
+         school = str_to_title(school)) %>% 
+  tbl_summary(by = school,
+              label = list(PM25_CFATM_Average ~ "PM2.5 CF=ATM Average",
+                           justDate ~ "Date Range"), 
+              type = PM25_CFATM_Average ~ "continuous2",
+              statistic = PM25_CFATM_Average ~ c("{min} - {max}", "{mean} ({sd})", "{median} ({p25}, {p75})")) %>%
+  add_overall() %>% 
+  modify_header(update = list(
+    label ~ "**Variable**"
+  )) %>% 
+  bold_labels() %>% 
+  modify_caption(caption = "Table 3: Summary table of concentration of PM2.5 by each school after channel consistency check") %>%
+  bold_labels() %>% 
+  modify_footnote(update = everything() ~ NA) %>% 
+  as_gt() %>% 
+  gt::tab_options(table.font.names = "Lato",
+                  table.font.size = 14,
+                  container.overflow.x = TRUE)
+
+######################################################################################
+
+allPA %>% 
+  select(-c(date, `Uptime (seconds)`, `PM2.5 A (CF=1) (ug/m3)`, `PM2.5 B (CF=1) (ug/m3)`)) %>% 
+  mutate(school = str_replace_all(school, "_", " "),
+         school = str_to_title(school)) %>% 
+  relocate(justDate, .before = `Humidity (%)`) %>% 
+  tbl_summary(by = school,
+              label = list(Pressure ~ "Pressure (Min - Max)",
+                           justDate ~ "Date Range"),
+              type = list(c(`2.5um A (particles/dL)`,
+                            `2.5um B (particles/dL)`,
+                            `PM2.5 A (CF=ATM) (ug/m3)`,
+                            `PM2.5 B (CF=ATM) (ug/m3)`) ~ 'continuous2'),
+              statistic = list(c(`Humidity (%)`, `Temperature (F)`) ~ "{median}",
+                               Pressure ~ "{min} - {max}",
+                               c(`2.5um A (particles/dL)`,
+                                 `2.5um B (particles/dL)`,
+                                 `PM2.5 A (CF=ATM) (ug/m3)`,
+                                 `PM2.5 B (CF=ATM) (ug/m3)`) ~ c("{min} - {max}", "{mean} ({sd})", "{median} ({p25}, {p75})")),
+              missing_text = "Missing") %>%
+  add_overall() %>% 
+  modify_header(update = list(
+    label ~ "**Variable**"
+  )) %>% 
+   modify_caption(caption = "Table 1: Summary table of concentration of PM2.5 and other environmental factors by each school") %>%
+  bold_labels() %>%
+  modify_footnote(update = everything() ~ NA) %>% 
+  as_gt() %>% 
+  gt::tab_options(table.font.names = "Lato",
+                  table.font.size = 14,
+                  container.overflow.x = TRUE)
+```
+

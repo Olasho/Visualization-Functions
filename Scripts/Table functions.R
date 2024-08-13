@@ -32,7 +32,6 @@ tabyl_summary_table <- function(df, variable_1, variable_2 = NULL, variable_3 = 
 }
 
 
-
 # creating a kable function to improve the summary table for the categorical variable
 
 summary_kable <- function(df, header) {
@@ -105,3 +104,32 @@ convert_to_kable_list <- function(table_list) {
   
   return(table_kables)
 }
+
+
+
+# Cleaning a table
+
+north_absence_3term_nat_reg_la_region <- north_absence_3term_nat_reg_la %>%
+  filter(geographic_level == "Regional", school_type == "Total") %>%
+  mutate(Region = case_when(
+    region_name %in% c("North East", "North West", "Yorkshire and The Humber") ~ "North",
+    region_name %in% c("South East", "South West", "Outer London", "Inner London", "East of England") ~ "South",
+    region_name %in% c("West Midlands", "East Midlands") ~ "Midlands")) %>%
+  group_by(Year, Region) %>%
+  summarise(`Overall absence rate` = sum(sess_overall_percent * sess_possible)/sum(sess_possible),
+            `Authorised absence rate` = sum(sess_authorised_percent * sess_possible)/sum(sess_possible),
+            `Unauthorised absence rate` = sum(sess_unauthorised_percent * sess_possible)/sum(sess_possible),
+            `Overall persistent absence rate` = sum(sess_overall_percent_pa_10_exact * sess_possible_pa_10_exact)/sum(sess_possible_pa_10_exact),
+            `Authorised persistent absence rate` = sum(sess_authorised_percent_pa_10_exact * sess_possible_pa_10_exact)/sum(sess_possible_pa_10_exact),
+            `Unauthorised persistent absence rate` = sum(sess_unauthorised_percent_pa_10_exact * sess_possible_pa_10_exact)/sum(sess_possible_pa_10_exact))
+select(Year, region_name, num_schools, enrolments_pa_10_exact_percent, enrolments_pa_50_exact_percent, sess_overall_percent, sess_authorised_percent, sess_unauthorised_percent, sess_overall_percent_pa_10_exact, sess_authorised_percent_pa_10_exact, sess_unauthorised_percent_pa_10_exact) %>%
+  rename(Region = region_name,
+         `Percentage of persistent absentees` = enrolments_pa_10_exact_percent,
+         `Percentage of severe absentees` = enrolments_pa_50_exact_percent,
+         `Overall absence rate` = sess_overall_percent,
+         `Authorised absence rate` = sess_authorised_percent,
+         `Unauthorised absence rate` = sess_unauthorised_percent,
+         `Overall persistent absence rate` = sess_overall_percent_pa_10_exact,
+         `Authorised persistent absence rate` = sess_authorised_percent_pa_10_exact,
+         `Unauthorised persistent absence rate` = sess_unauthorised_percent_pa_10_exact) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2)))
